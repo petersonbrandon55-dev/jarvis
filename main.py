@@ -92,10 +92,10 @@ def run_voice_mode(use_terminal=True, use_web=False):
     while True:
         try:
             hud.set_status("idle")
-            listener.wait_for_wake()
+            pre_roll = listener.wait_for_wake()
 
             hud.set_status("listening")
-            user_input = transcriber.listen_and_transcribe()
+            user_input = transcriber.listen_and_transcribe(pre_roll=pre_roll)
             if not user_input.strip():
                 continue
 
