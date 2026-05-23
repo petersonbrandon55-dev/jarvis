@@ -1,8 +1,11 @@
-import io
 import os
+import time
 import tempfile
 import subprocess
 from config.settings import ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID
+
+# Extra silence after audio finishes so the mic doesn't catch speaker reverb
+POST_SPEAK_DELAY = 0.4
 
 
 class Speaker:
@@ -42,7 +45,9 @@ class Speaker:
             tmp_path = f.name
         subprocess.run(["afplay", tmp_path], check=True)
         os.unlink(tmp_path)
+        time.sleep(POST_SPEAK_DELAY)
 
     def _speak_pyttsx3(self, text: str):
         self.engine.say(text)
         self.engine.runAndWait()
+        time.sleep(POST_SPEAK_DELAY)

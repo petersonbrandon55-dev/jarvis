@@ -56,9 +56,13 @@ class Listener:
         pre_roll_len = int(PRE_ROLL_SECS * 10)  # in chunks
         ring = collections.deque(maxlen=pre_roll_len)
         loud_count = 0
+        warmup_chunks = 5  # ignore first ~0.5s after mic opens to flush speaker reverb
 
         with sd.InputStream(samplerate=SAMPLE_RATE, channels=1, dtype="float32",
                             blocksize=CHUNK_SIZE) as stream:
+            for _ in range(warmup_chunks):
+                stream.read(CHUNK_SIZE)
+
             while True:
                 chunk, _ = stream.read(CHUNK_SIZE)
                 chunk = chunk.copy().flatten()
