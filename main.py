@@ -2,10 +2,11 @@
 """
 JARVIS — Brandon's personal AI assistant.
 Usage:
-    python main.py              # Wake word / keyboard mode with voice I/O
+    python main.py              # Voice mode with terminal HUD
+    python main.py --web        # Voice mode with web HUD (opens in browser)
+    python main.py --both       # Voice mode with BOTH HUDs running simultaneously
     python main.py --text       # Text-only mode (no mic/speakers needed)
 """
-import sys
 import argparse
 
 
@@ -18,7 +19,6 @@ def build_tool_handlers() -> dict:
         get_todays_tasks, get_current_week_plan, get_week_plan,
         add_task, mark_task_done, list_week_plans,
     )
-
     return {
         "web_search": web_search,
         "open_application": open_application,
@@ -36,7 +36,40 @@ def build_tool_handlers() -> dict:
     }
 
 
-def run_voice_mode():
+def _make_hud(use_terminal: bool, use_web: bool):
+    """Return a unified HUD proxy that forwards calls to whichever HUDs are active."""
+
+    huds = []
+    if use_terminal:
+        from ui.terminal_hud import HUD
+        huds.append(HUD())
+    if use_web:
+        from ui.web_hud import WebHUD
+        huds.append(WebHUD())
+
+    class MultiHUD:
+        def start(self):
+            for h in huds:
+                h.start()
+            if use_web:
+                huds[-1].open_browser()
+
+        def stop(self):
+            for h in huds:
+                h.stop()
+
+        def set_status(self, status):
+            for h in huds:
+                h.set_status(status)
+
+        def add_message(self, role, text):
+            for h in huds:
+                h.add_message(role, text)
+
+    return MultiHUD()
+
+
+def run_voice_mode(use_terminal=True, use_web=False):
     from core.listener import Listener
     from core.transcriber import Transcriber
     from core.speaker import Speaker
@@ -48,22 +81,44 @@ def run_voice_mode():
     transcriber = Transcriber()
     speaker = Speaker()
 
+    hud = _make_hud(use_terminal, use_web)
+    hud.start()
+
+    hud.set_status("speaking")
     speaker.speak("JARVIS online. How can I help you, Boss?")
+    hud.add_message("jarvis", "JARVIS online. How can I help you, Boss?")
+    hud.set_status("idle")
 
     while True:
         try:
+            hud.set_status("idle")
             listener.wait_for_wake()
+
+            hud.set_status("listening")
             user_input = transcriber.listen_and_transcribe()
             if not user_input.strip():
                 continue
+
+            hud.add_message("user", user_input)
+
             if user_input.lower() in ("goodbye", "bye jarvis", "shut down", "exit"):
+                hud.set_status("speaking")
                 speaker.speak("Understood. Going offline. Goodbye, Boss.")
+                hud.add_message("jarvis", "Understood. Going offline. Goodbye, Boss.")
                 break
+
+            hud.set_status("thinking")
             response = brain.think(user_input)
+
+            hud.set_status("speaking")
+            hud.add_message("jarvis", response)
             speaker.speak(response)
+
         except KeyboardInterrupt:
             print("\n[JARVIS] Shutting down.")
             break
+
+    hud.stop()
 
 
 def run_text_mode():
@@ -90,10 +145,16 @@ def run_text_mode():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="JARVIS AI Assistant")
-    parser.add_argument("--text", action="store_true", help="Run in text-only mode")
+    parser.add_argument("--text", action="store_true", help="Text-only mode")
+    parser.add_argument("--web",  action="store_true", help="Web HUD (opens in browser)")
+    parser.add_argument("--both", action="store_true", help="Terminal + web HUD simultaneously")
     args = parser.parse_args()
 
     if args.text:
         run_text_mode()
+    elif args.web:
+        run_voice_mode(use_terminal=False, use_web=True)
+    elif args.both:
+        run_voice_mode(use_terminal=True, use_web=True)
     else:
-        run_voice_mode()
+        run_voice_mode(use_terminal=True, use_web=False)

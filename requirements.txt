@@ -9,7 +9,10 @@ scipy>=1.11.0
 elevenlabs>=1.0.0
 pyttsx3>=2.90
 
-# Wake word (optional — comment out if not using Picovoice)
+# Wake word — openwakeword is free and built-in, no API key needed
+openwakeword>=0.6.0
+
+# Wake word alternative (requires PICOVOICE_ACCESS_KEY)
 pvporcupine>=3.0.0
 
 # Tools
@@ -18,3 +21,6 @@ requests>=2.31.0
 
 # Server mode (Tailscale remote access)
 flask>=3.0.0
+
+# Terminal HUD
+rich>=13.0.0

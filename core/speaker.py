@@ -7,7 +7,10 @@ from config.settings import ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID
 
 class Speaker:
     def __init__(self):
-        self.use_elevenlabs = bool(ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID)
+        self.use_elevenlabs = (
+            bool(ELEVENLABS_API_KEY) and ELEVENLABS_API_KEY != "your_key_here"
+            and bool(ELEVENLABS_VOICE_ID) and ELEVENLABS_VOICE_ID != "your_voice_id_here"
+        )
         if self.use_elevenlabs:
             from elevenlabs.client import ElevenLabs
             self.client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
