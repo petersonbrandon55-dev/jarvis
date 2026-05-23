@@ -19,6 +19,7 @@ CHUNK_SIZE      = SAMPLE_RATE // 10  # 100ms chunks
 class Listener:
     def __init__(self):
         self.mode = None
+        self.muted = False  # set True while JARVIS is speaking to prevent feedback loop
 
         key_set = bool(PICOVOICE_ACCESS_KEY) and PICOVOICE_ACCESS_KEY != "your_key_here"
         if key_set:
@@ -63,10 +64,13 @@ class Listener:
                 chunk = chunk.copy().flatten()
                 ring.append(chunk)
                 rms = float(np.sqrt(np.mean(chunk ** 2)))
+                if self.muted:
+                    loud_count = 0
+                    ring.clear()
+                    continue
                 if rms > VAD_THRESHOLD:
                     loud_count += 1
                     if loud_count >= VAD_TRIGGER_CHUNKS:
-                        # Return everything buffered so transcriber has the full phrase
                         return np.concatenate(list(ring))
                 else:
                     loud_count = 0

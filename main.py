@@ -85,7 +85,9 @@ def run_voice_mode(use_terminal=True, use_web=False):
     hud.start()
 
     hud.set_status("speaking")
+    listener.muted = True
     speaker.speak("JARVIS online. How can I help you, Boss?")
+    listener.muted = False
     hud.add_message("jarvis", "JARVIS online. How can I help you, Boss?")
     hud.set_status("idle")
 
@@ -103,7 +105,9 @@ def run_voice_mode(use_terminal=True, use_web=False):
 
             if user_input.lower() in ("goodbye", "bye jarvis", "shut down", "exit"):
                 hud.set_status("speaking")
+                listener.muted = True
                 speaker.speak("Understood. Going offline. Goodbye, Boss.")
+                listener.muted = False
                 hud.add_message("jarvis", "Understood. Going offline. Goodbye, Boss.")
                 break
 
@@ -112,7 +116,9 @@ def run_voice_mode(use_terminal=True, use_web=False):
 
             hud.set_status("speaking")
             hud.add_message("jarvis", response)
+            listener.muted = True
             speaker.speak(response)
+            listener.muted = False
 
         except KeyboardInterrupt:
             print("\n[JARVIS] Shutting down.")
