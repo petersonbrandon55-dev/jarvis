@@ -23,7 +23,8 @@ class Speaker:
             self.engine = pyttsx3.init()
             self.engine.setProperty("rate", 175)
             self.engine.setProperty("volume", 0.9)
-            print("[JARVIS] Speaker: pyttsx3 (set ELEVENLABS_API_KEY for better voice)")
+            self.engine.setProperty("voice", "com.apple.voice.compact.en-GB.Daniel")
+            print("[JARVIS] Speaker: Daniel (British English)")
 
     def speak(self, text: str):
         print(f"[JARVIS] Speaking: {text}")
