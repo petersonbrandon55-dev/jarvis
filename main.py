@@ -14,6 +14,10 @@ def build_tool_handlers() -> dict:
     from tools.mac_control import open_application, run_shell_command
     from tools.obsidian import read_obsidian_note, write_obsidian_note, list_obsidian_notes
     from tools.home_assistant import smart_home_control
+    from tools.plans import (
+        get_todays_tasks, get_current_week_plan, get_week_plan,
+        add_task, mark_task_done, list_week_plans,
+    )
 
     return {
         "web_search": web_search,
@@ -23,6 +27,12 @@ def build_tool_handlers() -> dict:
         "write_obsidian_note": write_obsidian_note,
         "list_obsidian_notes": list_obsidian_notes,
         "smart_home_control": smart_home_control,
+        "get_todays_tasks": get_todays_tasks,
+        "get_current_week_plan": get_current_week_plan,
+        "get_week_plan": get_week_plan,
+        "add_task": add_task,
+        "mark_task_done": mark_task_done,
+        "list_week_plans": list_week_plans,
     }
 
 

@@ -17,8 +17,14 @@ Brandon's context:
 - Uses Obsidian for his second brain / personal wiki
 - On Mac primarily, also has a Dell
 
-You have tools to: search the web, control the Mac, read/write Obsidian notes, and control smart home devices.
-Always use tools when you need current info rather than guessing."""
+You have tools to: search the web, control the Mac, read/write Obsidian notes, manage Brandon's plans/tasks, and control smart home devices.
+Always use tools when you need current info rather than guessing.
+
+Brandon's Obsidian Plans structure:
+- Plans/_Today.md — tasks due/scheduled today
+- Plans/Week N - <date>.md — weekly task files (Week 1, Week 2, etc.)
+- Sections inside each week: CAREER (Security+, Peterson Automations) and CRAFT (JARVIS, Day Trading)
+When Brandon asks what's on his plate, what's due, or to add/check off a task — use the plan tools."""
 
 TOOLS = [
     {
@@ -90,6 +96,59 @@ TOOLS = [
                 "folder": {"type": "string", "description": "Optional subfolder to list", "default": ""},
             },
         },
+    },
+    {
+        "name": "get_todays_tasks",
+        "description": "Get all tasks scheduled or due today from Brandon's weekly plans",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_current_week_plan",
+        "description": "Get the full contents of the current week's plan",
+        "input_schema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_week_plan",
+        "description": "Get a specific week plan by name, e.g. 'Week 1' or 'Week 2'",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "week_name": {"type": "string", "description": "Partial week name, e.g. 'Week 1', 'Jun 1'"},
+            },
+            "required": ["week_name"],
+        },
+    },
+    {
+        "name": "add_task",
+        "description": "Add a new task to a week plan. Use this when Brandon asks to add something to his plans.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_description": {"type": "string", "description": "The task text"},
+                "section": {"type": "string", "description": "Section to add under, e.g. 'JARVIS', 'Peterson Automations', 'Day Trading'", "default": ""},
+                "week": {"type": "string", "description": "'current' or partial week name like 'Week 2'", "default": "current"},
+                "due_date": {"type": "string", "description": "ISO date YYYY-MM-DD, or empty string", "default": ""},
+                "priority": {"type": "string", "description": "highest, high, medium, normal, low", "default": "normal"},
+                "tag": {"type": "string", "description": "Task tag: 'craft' or 'career'", "default": "craft"},
+            },
+            "required": ["task_description"],
+        },
+    },
+    {
+        "name": "mark_task_done",
+        "description": "Mark a task as complete by matching partial text",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "task_partial": {"type": "string", "description": "Partial text of the task to mark done"},
+            },
+            "required": ["task_partial"],
+        },
+    },
+    {
+        "name": "list_week_plans",
+        "description": "List all available week plan files",
+        "input_schema": {"type": "object", "properties": {}},
     },
     {
         "name": "smart_home_control",
