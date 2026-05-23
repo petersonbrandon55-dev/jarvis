@@ -84,11 +84,25 @@ def run_voice_mode(use_terminal=True, use_web=False):
     hud = _make_hud(use_terminal, use_web)
     hud.start()
 
+    # Startup briefing — time, date, weather, today's tasks
+    hud.set_status("thinking")
+    from datetime import datetime
+    now = datetime.now()
+    briefing_prompt = (
+        f"JARVIS is just coming online. The current time is {now.strftime('%I:%M %p')} "
+        f"on {now.strftime('%A, %B %d')}. "
+        "Give Brandon a natural spoken startup greeting that includes: "
+        "1) a greeting with the time and day, "
+        "2) current weather for the DMV area (use web_search), "
+        "3) his tasks for today (use get_todays_tasks). "
+        "Keep it conversational and concise — you're speaking aloud, not writing a report."
+    )
+    briefing = brain.think(briefing_prompt)
     hud.set_status("speaking")
+    hud.add_message("jarvis", briefing)
     listener.muted = True
-    speaker.speak("JARVIS online. How can I help you, Boss?")
+    speaker.speak(briefing)
     listener.muted = False
-    hud.add_message("jarvis", "JARVIS online. How can I help you, Boss?")
     hud.set_status("idle")
 
     while True:
