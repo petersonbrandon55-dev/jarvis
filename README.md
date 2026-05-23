@@ -21,6 +21,7 @@ python main.py              # full voice mode
 | Text | `python main.py --text` | No mic/speaker needed |
 | Voice (keyboard) | `python main.py` | Press Enter to speak |
 | Voice (wake word) | `python main.py` + `PICOVOICE_ACCESS_KEY` | Say "Hey Jarvis" |
+| Server (Tailscale) | `python server.py` | HTTP API, reach from phone |
 
 ## API Keys
 
@@ -39,6 +40,16 @@ python main.py              # full voice mode
 - **Obsidian** — read/write notes in your vault
 - **Smart home** — control lights and devices via Home Assistant
 - **Persistent memory** — JARVIS remembers context across the conversation
+
+## Tailscale (Access from Phone)
+
+1. Install [Tailscale](https://tailscale.com) on your Mac and phone
+2. Sign in with the same account on both
+3. On Mac, run JARVIS server: `python server.py`
+4. Find your Mac's Tailscale IP: `tailscale ip -4`
+5. From your phone, POST to `http://<tailscale-ip>:8888/ask` with `{"message": "your question"}`
+
+Or use a shortcut app on iPhone to hit the endpoint with voice input.
 
 ## Project Structure
 

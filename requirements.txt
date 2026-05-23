@@ -15,3 +15,6 @@ pvporcupine>=3.0.0
 # Tools
 tavily-python>=0.3.0
 requests>=2.31.0
+
+# Server mode (Tailscale remote access)
+flask>=3.0.0
