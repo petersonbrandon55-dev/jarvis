@@ -21,8 +21,8 @@ class Speaker:
         else:
             import pyttsx3
             self.engine = pyttsx3.init()
-            self.engine.setProperty("rate", 175)
-            self.engine.setProperty("volume", 0.9)
+            self.engine.setProperty("rate", 210)
+            self.engine.setProperty("volume", 1.0)
             self.engine.setProperty("voice", "com.apple.voice.compact.en-GB.Daniel")
             print("[JARVIS] Speaker: Daniel (British English)")
 

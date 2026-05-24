@@ -3,641 +3,443 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JARVIS HUD</title>
+<title>JARVIS</title>
 <style>
-  /* ─── Reset & Base ─── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-  :root {
-    --cyan:    #00e5ff;
-    --green:   #00ff88;
-    --yellow:  #ffd600;
-    --blue:    #1565c0;
-    --dim:     #0d47a1;
-    --bg:      #0a0a0f;
-    --panel:   rgba(0, 229, 255, 0.04);
-    --border:  rgba(0, 229, 255, 0.15);
-    --status-color: var(--dim);
-  }
+:root{
+  --c:   #00e5ff;
+  --g:   #00ff88;
+  --y:   #ffd600;
+  --r:   #ff4444;
+  --bg:  #050810;
+  --bg2: #080c18;
+  --glow: rgba(0,229,255,0.18);
+  --border: rgba(0,229,255,0.12);
+  --sc: var(--c);
+}
 
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--cyan);
-    font-family: 'Courier New', Courier, monospace;
-    overflow: hidden;
-    user-select: none;
-  }
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--c);font-family:'Courier New',monospace;user-select:none}
 
-  /* ─── Scanline overlay ─── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      rgba(0,229,255,0.012) 3px,
-      rgba(0,229,255,0.012) 4px
-    );
-    pointer-events: none;
-    z-index: 999;
-  }
+/* ── Grid background ── */
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
 
-  /* ─── Corner brackets ─── */
-  .corner {
-    position: fixed;
-    width: 48px; height: 48px;
-    border-color: rgba(0,229,255,0.35);
-    border-style: solid;
-    z-index: 10;
-  }
-  .corner.tl { top: 18px; left: 18px; border-width: 2px 0 0 2px; }
-  .corner.tr { top: 18px; right: 18px; border-width: 2px 2px 0 0; }
-  .corner.bl { bottom: 18px; left: 18px; border-width: 0 0 2px 2px; }
-  .corner.br { bottom: 18px; right: 18px; border-width: 0 2px 2px 0; }
+/* ── Scanlines ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px);
+  pointer-events:none;z-index:999;
+}
 
-  /* ─── Layout ─── */
-  #hud {
-    display: grid;
-    grid-template-rows: auto 1fr auto auto;
-    height: 100vh;
-    padding: 32px 48px 24px;
-    gap: 16px;
-  }
+/* ── Corner brackets ── */
+.corner{position:fixed;width:60px;height:60px;border-color:rgba(0,229,255,0.4);border-style:solid;z-index:10}
+.corner::after{content:'';position:absolute;width:6px;height:6px;background:var(--c);border-radius:50%;box-shadow:0 0 8px var(--c)}
+.tl{top:20px;left:20px;border-width:2px 0 0 2px}.tl::after{top:-3px;left:-3px}
+.tr{top:20px;right:20px;border-width:2px 2px 0 0}.tr::after{top:-3px;right:-3px}
+.bl{bottom:20px;left:20px;border-width:0 0 2px 2px}.bl::after{bottom:-3px;left:-3px}
+.br{bottom:20px;right:20px;border-width:0 2px 2px 0}.br::after{bottom:-3px;right:-3px}
 
-  /* ─── Header ─── */
-  #header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
+/* ── Main layout ── */
+#app{
+  position:relative;z-index:1;
+  display:grid;
+  grid-template-columns:220px 1fr 220px;
+  grid-template-rows:auto 1fr auto auto;
+  height:100vh;
+  padding:32px 24px 20px;
+  gap:12px;
+}
 
-  #title {
-    font-size: clamp(2.4rem, 5vw, 4rem);
-    font-weight: 900;
-    letter-spacing: 0.45em;
-    text-transform: uppercase;
-    color: var(--cyan);
-    text-shadow:
-      0 0 8px  var(--cyan),
-      0 0 20px var(--cyan),
-      0 0 48px rgba(0,229,255,0.6),
-      0 0 80px rgba(0,229,255,0.25);
-    animation: titlePulse 4s ease-in-out infinite;
-  }
+/* ── Header ── */
+#header{
+  grid-column:1/-1;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  padding-bottom:12px;
+}
 
-  @keyframes titlePulse {
-    0%, 100% { text-shadow: 0 0 8px var(--cyan), 0 0 20px var(--cyan), 0 0 48px rgba(0,229,255,0.6), 0 0 80px rgba(0,229,255,0.25); }
-    50%       { text-shadow: 0 0 4px var(--cyan), 0 0 12px var(--cyan), 0 0 28px rgba(0,229,255,0.4), 0 0 50px rgba(0,229,255,0.15); }
-  }
+#title-block{display:flex;flex-direction:column;align-items:center;flex:1}
 
-  #subtitle {
-    font-size: 0.65rem;
-    letter-spacing: 0.3em;
-    color: rgba(0,229,255,0.45);
-    text-transform: uppercase;
-  }
+#title{
+  font-size:clamp(2rem,4vw,3.5rem);
+  font-weight:900;
+  letter-spacing:.55em;
+  text-transform:uppercase;
+  color:var(--c);
+  text-shadow:0 0 10px var(--c),0 0 30px var(--c),0 0 60px rgba(0,229,255,0.5);
+  animation:titleBreath 5s ease-in-out infinite;
+}
+@keyframes titleBreath{
+  0%,100%{text-shadow:0 0 10px var(--c),0 0 30px var(--c),0 0 60px rgba(0,229,255,0.5)}
+  50%{text-shadow:0 0 6px var(--c),0 0 18px var(--c),0 0 36px rgba(0,229,255,0.3)}
+}
 
-  /* ─── Status badge ─── */
-  #status-bar {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-top: 4px;
-  }
+#tagline{font-size:.58rem;letter-spacing:.3em;color:rgba(0,229,255,0.35);margin-top:3px;text-transform:uppercase}
 
-  #status-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--status-color);
-    box-shadow: 0 0 8px var(--status-color), 0 0 16px var(--status-color);
-    transition: background 0.3s, box-shadow 0.3s;
-  }
+/* header flanks */
+.header-flank{display:flex;flex-direction:column;gap:5px;min-width:180px}
+.header-flank.right{align-items:flex-end}
+.hf-row{font-size:.55rem;letter-spacing:.15em;color:rgba(0,229,255,0.35);text-transform:uppercase}
+.hf-row span{color:rgba(0,229,255,0.7)}
 
-  #status-text {
-    font-size: 0.7rem;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--status-color);
-    transition: color 0.3s;
-    min-width: 90px;
-  }
+/* ── Status pill ── */
+#status-pill{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,229,255,0.05);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:5px 14px;
+  margin-top:8px;
+}
+#sdot{width:8px;height:8px;border-radius:50%;background:var(--sc);box-shadow:0 0 8px var(--sc),0 0 16px var(--sc);transition:all .3s}
+#slabel{font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:var(--sc);transition:color .3s;min-width:88px}
 
-  /* ─── Center: arcs + orb ─── */
-  #center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
+/* ── Left sidebar ── */
+#left{grid-column:1;grid-row:2;display:flex;flex-direction:column;gap:10px}
 
-  #arc-container {
-    position: relative;
-    width: min(300px, 40vw);
-    height: min(300px, 40vw);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+/* ── Center ── */
+#center{grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 
-  .arc-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 2px solid transparent;
-  }
+/* ── Right sidebar ── */
+#right{grid-column:3;grid-row:2;display:flex;flex-direction:column;gap:10px}
 
-  /* Ring 1 — outermost */
-  .arc-ring:nth-child(1) {
-    width: 100%; height: 100%;
-    border-top-color:    rgba(0,229,255,0.55);
-    border-right-color:  rgba(0,229,255,0.18);
-    border-bottom-color: rgba(0,229,255,0.08);
-    border-left-color:   rgba(0,229,255,0.35);
-    animation: spin1 6s linear infinite;
-  }
-  /* Ring 2 */
-  .arc-ring:nth-child(2) {
-    width: 80%; height: 80%;
-    border-top-color:    rgba(0,229,255,0.0);
-    border-right-color:  rgba(0,229,255,0.6);
-    border-bottom-color: rgba(0,229,255,0.35);
-    border-left-color:   rgba(0,229,255,0.1);
-    animation: spin2 4.2s linear infinite reverse;
-  }
-  /* Ring 3 */
-  .arc-ring:nth-child(3) {
-    width: 62%; height: 62%;
-    border-top-color:    rgba(0,229,255,0.4);
-    border-right-color:  rgba(0,229,255,0.08);
-    border-bottom-color: rgba(0,229,255,0.55);
-    border-left-color:   rgba(0,229,255,0.2);
-    animation: spin1 3s linear infinite;
-  }
-  /* Ring 4 — innermost */
-  .arc-ring:nth-child(4) {
-    width: 44%; height: 44%;
-    border-top-color:    rgba(0,229,255,0.0);
-    border-right-color:  rgba(0,229,255,0.7);
-    border-bottom-color: rgba(0,229,255,0.0);
-    border-left-color:   rgba(0,229,255,0.4);
-    animation: spin2 2s linear infinite;
-  }
+/* ── Panel card ── */
+.card{
+  background:rgba(0,229,255,0.03);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:10px 12px;
+}
+.card-title{
+  font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;
+  color:rgba(0,229,255,0.35);margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.card-title::before{content:'';display:inline-block;width:12px;height:1px;background:rgba(0,229,255,0.35)}
 
-  @keyframes spin1 { to { transform: rotate(360deg); } }
-  @keyframes spin2 { to { transform: rotate(-360deg); } }
+.data-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.data-key{font-size:.55rem;letter-spacing:.1em;color:rgba(0,229,255,0.4)}
+.data-val{font-size:.58rem;letter-spacing:.08em;color:rgba(0,229,255,0.85)}
+.data-val.green{color:var(--g)}
+.data-val.yellow{color:var(--y)}
 
-  /* Orb core */
-  #orb {
-    position: absolute;
-    width: 28%; height: 28%;
-    border-radius: 50%;
-    background: radial-gradient(circle at 38% 35%,
-      rgba(0,229,255,0.85) 0%,
-      rgba(0,180,255,0.5)  30%,
-      rgba(0,100,200,0.25) 65%,
-      rgba(0,20,60,0.6)    100%
-    );
-    box-shadow:
-      0 0 16px  rgba(0,229,255,0.8),
-      0 0 40px  rgba(0,229,255,0.45),
-      0 0 80px  rgba(0,229,255,0.2);
-    animation: orbPulse 2.5s ease-in-out infinite;
-  }
+/* mini bar chart */
+.mini-bar-wrap{display:flex;gap:2px;align-items:flex-end;height:28px;margin-top:4px}
+.mini-bar{width:6px;background:rgba(0,229,255,0.25);border-radius:1px;animation:miniPulse 2s ease-in-out infinite}
+@keyframes miniPulse{0%,100%{opacity:.4}50%{opacity:.9}}
 
-  @keyframes orbPulse {
-    0%, 100% {
-      box-shadow: 0 0 16px rgba(0,229,255,0.8), 0 0 40px rgba(0,229,255,0.45), 0 0 80px rgba(0,229,255,0.2);
-      transform: scale(1);
-    }
-    50% {
-      box-shadow: 0 0 24px rgba(0,229,255,1), 0 0 60px rgba(0,229,255,0.6), 0 0 110px rgba(0,229,255,0.3);
-      transform: scale(1.06);
-    }
-  }
+/* ── Arc rings ── */
+#arc-wrap{position:relative;width:min(260px,34vw);height:min(260px,34vw);display:flex;align-items:center;justify-content:center}
 
-  /* Listening state — rings speed up + turn green */
-  body.listening .arc-ring:nth-child(1) { animation-duration: 2s;   border-top-color: rgba(0,255,136,0.7); border-left-color: rgba(0,255,136,0.4); }
-  body.listening .arc-ring:nth-child(2) { animation-duration: 1.4s; border-right-color: rgba(0,255,136,0.8); border-bottom-color: rgba(0,255,136,0.45); }
-  body.listening .arc-ring:nth-child(3) { animation-duration: 1s;   border-top-color: rgba(0,255,136,0.5); border-bottom-color: rgba(0,255,136,0.7); }
-  body.listening .arc-ring:nth-child(4) { animation-duration: 0.7s; border-right-color: rgba(0,255,136,0.9); border-left-color: rgba(0,255,136,0.5); }
-  body.listening #orb {
-    background: radial-gradient(circle at 38% 35%,
-      rgba(0,255,136,0.9) 0%, rgba(0,200,100,0.55) 35%,
-      rgba(0,120,60,0.25) 65%, rgba(0,20,10,0.5) 100%
-    );
-    animation: orbListening 0.8s ease-in-out infinite;
-  }
-  @keyframes orbListening {
-    0%,100% { box-shadow: 0 0 20px rgba(0,255,136,0.9), 0 0 50px rgba(0,255,136,0.55), 0 0 100px rgba(0,255,136,0.25); transform: scale(1); }
-    50%     { box-shadow: 0 0 32px rgba(0,255,136,1),   0 0 80px rgba(0,255,136,0.7),  0 0 140px rgba(0,255,136,0.4);  transform: scale(1.12); }
-  }
+.ring{position:absolute;border-radius:50%;border:1.5px solid transparent}
+.ring:nth-child(1){width:100%;height:100%;border-top-color:rgba(0,229,255,.6);border-right-color:rgba(0,229,255,.15);border-left-color:rgba(0,229,255,.3);animation:cw 7s linear infinite}
+.ring:nth-child(2){width:82%;height:82%;border-top-color:rgba(0,229,255,.0);border-right-color:rgba(0,229,255,.55);border-bottom-color:rgba(0,229,255,.3);animation:ccw 5s linear infinite}
+.ring:nth-child(3){width:65%;height:65%;border-top-color:rgba(0,229,255,.45);border-left-color:rgba(0,229,255,.2);border-bottom-color:rgba(0,229,255,.5);animation:cw 3.5s linear infinite}
+.ring:nth-child(4){width:48%;height:48%;border-right-color:rgba(0,229,255,.7);border-left-color:rgba(0,229,255,.35);animation:ccw 2.2s linear infinite}
 
-  /* Thinking state — yellow */
-  body.thinking .arc-ring:nth-child(1) { animation-duration: 3s;   border-top-color: rgba(255,214,0,0.55); }
-  body.thinking .arc-ring:nth-child(2) { animation-duration: 2.1s; border-right-color: rgba(255,214,0,0.65); }
-  body.thinking .arc-ring:nth-child(3) { animation-duration: 1.5s; border-bottom-color: rgba(255,214,0,0.7); }
-  body.thinking .arc-ring:nth-child(4) { animation-duration: 1s;   border-right-color: rgba(255,214,0,0.8); }
-  body.thinking #orb {
-    background: radial-gradient(circle at 38% 35%,
-      rgba(255,220,50,0.85) 0%, rgba(200,160,0,0.5) 35%,
-      rgba(120,80,0,0.25) 65%, rgba(30,20,0,0.6) 100%
-    );
-    animation: orbThinking 1.4s ease-in-out infinite;
-  }
-  @keyframes orbThinking {
-    0%,100% { box-shadow: 0 0 18px rgba(255,214,0,0.8), 0 0 45px rgba(255,214,0,0.4), 0 0 90px rgba(255,214,0,0.15); transform: scale(1); }
-    50%     { box-shadow: 0 0 28px rgba(255,214,0,1),   0 0 65px rgba(255,214,0,0.6), 0 0 120px rgba(255,214,0,0.3);  transform: scale(1.08); }
-  }
+@keyframes cw {to{transform:rotate(360deg)}}
+@keyframes ccw{to{transform:rotate(-360deg)}}
 
-  /* Speaking state — cyan (same as default but more intense) */
-  body.speaking .arc-ring:nth-child(1) { animation-duration: 4s; }
-  body.speaking .arc-ring:nth-child(2) { animation-duration: 2.8s; }
-  body.speaking #orb { animation: orbSpeaking 1.1s ease-in-out infinite; }
-  @keyframes orbSpeaking {
-    0%,100% { box-shadow: 0 0 20px rgba(0,229,255,1), 0 0 55px rgba(0,229,255,0.6), 0 0 100px rgba(0,229,255,0.3); transform: scale(1); }
-    50%     { box-shadow: 0 0 30px rgba(0,229,255,1), 0 0 80px rgba(0,229,255,0.8), 0 0 150px rgba(0,229,255,0.4);  transform: scale(1.1); }
-  }
+/* ring state colors */
+body.listening  .ring{border-color:transparent}
+body.listening  .ring:nth-child(1){border-top-color:rgba(0,255,136,.7);border-left-color:rgba(0,255,136,.35);animation-duration:2s}
+body.listening  .ring:nth-child(2){border-right-color:rgba(0,255,136,.8);border-bottom-color:rgba(0,255,136,.45);animation-duration:1.3s}
+body.listening  .ring:nth-child(3){border-top-color:rgba(0,255,136,.55);border-bottom-color:rgba(0,255,136,.65);animation-duration:.9s}
+body.listening  .ring:nth-child(4){border-right-color:rgba(0,255,136,.9);border-left-color:rgba(0,255,136,.5);animation-duration:.6s}
+body.thinking   .ring{border-color:transparent}
+body.thinking   .ring:nth-child(1){border-top-color:rgba(255,214,0,.55);animation-duration:4s}
+body.thinking   .ring:nth-child(2){border-right-color:rgba(255,214,0,.65);animation-duration:2.8s}
+body.thinking   .ring:nth-child(3){border-bottom-color:rgba(255,214,0,.7);animation-duration:1.8s}
+body.thinking   .ring:nth-child(4){border-right-color:rgba(255,214,0,.8);animation-duration:1.2s}
+body.speaking   .ring:nth-child(1){animation-duration:3.5s}
+body.speaking   .ring:nth-child(2){animation-duration:2.3s}
 
-  /* ─── Side panels (flanking the arc) ─── */
-  #panels {
-    position: absolute;
-    display: flex;
-    justify-content: space-between;
-    width: min(720px, 80vw);
-    pointer-events: none;
-  }
+/* ── Orb ── */
+#orb{
+  position:absolute;width:26%;height:26%;border-radius:50%;
+  background:radial-gradient(circle at 38% 35%,rgba(0,229,255,.9) 0%,rgba(0,160,220,.55) 35%,rgba(0,80,180,.2) 70%,rgba(0,10,40,.7) 100%);
+  box-shadow:0 0 16px rgba(0,229,255,.8),0 0 40px rgba(0,229,255,.4),0 0 80px rgba(0,229,255,.15);
+  animation:orbIdle 3s ease-in-out infinite;
+}
+@keyframes orbIdle{
+  0%,100%{box-shadow:0 0 16px rgba(0,229,255,.8),0 0 40px rgba(0,229,255,.4),0 0 80px rgba(0,229,255,.15);transform:scale(1)}
+  50%{box-shadow:0 0 22px rgba(0,229,255,1),0 0 55px rgba(0,229,255,.55),0 0 100px rgba(0,229,255,.25);transform:scale(1.07)}
+}
+body.listening #orb{background:radial-gradient(circle at 38% 35%,rgba(0,255,136,.95) 0%,rgba(0,200,100,.55) 35%,rgba(0,100,50,.2) 70%,rgba(0,20,10,.6) 100%);animation:orbListen .7s ease-in-out infinite}
+@keyframes orbListen{0%,100%{box-shadow:0 0 22px rgba(0,255,136,.9),0 0 55px rgba(0,255,136,.5),0 0 100px rgba(0,255,136,.2);transform:scale(1)}50%{box-shadow:0 0 34px rgba(0,255,136,1),0 0 80px rgba(0,255,136,.7),0 0 150px rgba(0,255,136,.35);transform:scale(1.14)}}
+body.thinking #orb{background:radial-gradient(circle at 38% 35%,rgba(255,220,50,.9) 0%,rgba(200,160,0,.5) 35%,rgba(100,70,0,.2) 70%,rgba(20,15,0,.6) 100%);animation:orbThink 1.3s ease-in-out infinite}
+@keyframes orbThink{0%,100%{box-shadow:0 0 18px rgba(255,214,0,.85),0 0 45px rgba(255,214,0,.4),0 0 90px rgba(255,214,0,.15)}50%{box-shadow:0 0 28px rgba(255,214,0,1),0 0 65px rgba(255,214,0,.6),0 0 120px rgba(255,214,0,.3);transform:scale(1.09)}}
+body.speaking #orb{animation:orbSpeak 1s ease-in-out infinite}
+@keyframes orbSpeak{0%,100%{box-shadow:0 0 20px rgba(0,229,255,1),0 0 55px rgba(0,229,255,.6),0 0 100px rgba(0,229,255,.3)}50%{box-shadow:0 0 32px rgba(0,229,255,1),0 0 80px rgba(0,229,255,.8),0 0 150px rgba(0,229,255,.4);transform:scale(1.11)}}
 
-  .side-panel {
-    width: 150px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    opacity: 0.55;
-  }
+/* ── Waveform ── */
+#wave{display:flex;align-items:center;justify-content:center;gap:3px;height:52px;padding:0 8px}
+.bar{width:4px;border-radius:2px;background:linear-gradient(to top,rgba(0,229,255,.15),rgba(0,229,255,.7));height:3px}
+body.listening .bar{animation:wv var(--d,.8s) ease-in-out infinite alternate;background:linear-gradient(to top,rgba(0,255,136,.2),rgba(0,255,136,.95))}
+body.thinking  .bar{animation:wv var(--d,1.5s) ease-in-out infinite alternate;background:linear-gradient(to top,rgba(255,214,0,.2),rgba(255,214,0,.8))}
+body.speaking  .bar{animation:wv var(--d,.55s) ease-in-out infinite alternate;background:linear-gradient(to top,rgba(0,229,255,.2),rgba(0,229,255,1))}
+@keyframes wv{from{height:3px}to{height:var(--h,28px)}}
 
-  .panel-line {
-    font-size: 0.58rem;
-    letter-spacing: 0.12em;
-    color: var(--cyan);
-    border-left: 2px solid rgba(0,229,255,0.3);
-    padding-left: 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .side-panel.right .panel-line { border-left: none; border-right: 2px solid rgba(0,229,255,0.3); padding-left: 0; padding-right: 6px; text-align: right; }
+/* ── Log ── */
+#log-wrap{grid-column:1/-1;grid-row:3}
+#log-box{
+  background:rgba(0,229,255,0.03);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:10px 16px;
+  display:flex;flex-direction:column;gap:6px;
+  max-height:150px;overflow:hidden;position:relative;
+}
+#log-box::before{content:'';position:absolute;top:0;left:0;right:0;height:32px;background:linear-gradient(to bottom,rgba(5,8,16,.95),transparent);pointer-events:none;z-index:1}
+#log-head{font-size:.5rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(0,229,255,.3);margin-bottom:2px;display:flex;align-items:center;gap:8px}
+#log-entries{display:flex;flex-direction:column;gap:5px}
 
-  /* ─── Waveform ─── */
-  #waveform-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
+.entry{display:grid;grid-template-columns:72px 1fr;gap:10px;animation:fadeUp .35s ease forwards;opacity:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.erole{font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;padding-top:1px}
+.erole.you{color:rgba(0,229,255,.45)}
+.erole.jar{color:var(--c);text-shadow:0 0 8px rgba(0,229,255,.5)}
+.etext{font-size:.68rem;line-height:1.5;color:rgba(180,230,255,.8);word-break:break-word}
+.entry.jar-entry .etext{color:rgba(210,245,255,.95)}
 
-  #waveform {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    height: 48px;
-  }
+/* ── Footer ── */
+#footer{
+  grid-column:1/-1;grid-row:4;
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid var(--border);padding-top:10px;
+  font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(0,229,255,.22);
+}
 
-  .bar {
-    width: 4px;
-    border-radius: 2px;
-    background: linear-gradient(to top, rgba(0,229,255,0.2), rgba(0,229,255,0.8));
-    transform-origin: bottom center;
-    transition: background 0.3s;
-  }
+#cdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:rgba(0,229,255,.2);margin-right:5px;transition:all .4s}
+#cdot.live{background:var(--g);box-shadow:0 0 6px var(--g);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
 
-  /* Idle: all bars flat */
-  .bar { height: 3px; animation: none; }
-
-  /* Listening: bars animate */
-  body.listening  .bar { animation: wave var(--dur, 0.8s) ease-in-out infinite alternate; background: linear-gradient(to top, rgba(0,255,136,0.2), rgba(0,255,136,0.9)); }
-  body.thinking   .bar { animation: waveSlow var(--dur, 1.4s) ease-in-out infinite alternate; background: linear-gradient(to top, rgba(255,214,0,0.2), rgba(255,214,0,0.85)); }
-  body.speaking   .bar { animation: wave var(--dur, 0.6s) ease-in-out infinite alternate; background: linear-gradient(to top, rgba(0,229,255,0.2), rgba(0,229,255,0.95)); }
-
-  @keyframes wave {
-    from { height: 3px; }
-    to   { height: var(--h, 30px); }
-  }
-  @keyframes waveSlow {
-    from { height: 3px; }
-    to   { height: calc(var(--h, 20px) * 0.6); }
-  }
-
-  /* ─── Conversation log ─── */
-  #log-section {
-    border: 1px solid var(--border);
-    background: var(--panel);
-    border-radius: 4px;
-    padding: 10px 14px;
-    max-height: 180px;
-    overflow: hidden;
-    position: relative;
-  }
-
-  #log-label {
-    font-size: 0.55rem;
-    letter-spacing: 0.25em;
-    color: rgba(0,229,255,0.4);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
-  #log {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .log-entry {
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 8px;
-    font-size: 0.68rem;
-    line-height: 1.4;
-    opacity: 0;
-    animation: fadeIn 0.4s forwards;
-  }
-
-  @keyframes fadeIn { to { opacity: 1; } }
-
-  .log-role {
-    font-size: 0.6rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding-top: 1px;
-  }
-  .log-role.user   { color: rgba(0,229,255,0.5); }
-  .log-role.jarvis { color: rgba(0,229,255,0.9); text-shadow: 0 0 6px rgba(0,229,255,0.5); }
-
-  .log-text {
-    color: rgba(0,229,255,0.75);
-    word-break: break-word;
-  }
-  .log-entry.jarvis-entry .log-text { color: rgba(200,240,255,0.9); }
-
-  /* Fade-out top entries via mask */
-  #log-section::before {
-    content: '';
-    position: absolute;
-    top: 30px; left: 0; right: 0;
-    height: 28px;
-    background: linear-gradient(to bottom, var(--bg), transparent);
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  /* ─── Footer ─── */
-  #footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.52rem;
-    letter-spacing: 0.18em;
-    color: rgba(0,229,255,0.25);
-    text-transform: uppercase;
-  }
-
-  #clock { font-variant-numeric: tabular-nums; }
-
-  /* ─── Connection indicator ─── */
-  #conn-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: rgba(0,229,255,0.25);
-    margin-right: 5px;
-    transition: background 0.4s, box-shadow 0.4s;
-  }
-  #conn-dot.live {
-    background: var(--green);
-    box-shadow: 0 0 6px var(--green);
-    animation: connBlink 2s ease-in-out infinite;
-  }
-  @keyframes connBlink {
-    0%,100% { opacity: 1; } 50% { opacity: 0.5; }
-  }
-
+#clock{font-variant-numeric:tabular-nums;color:rgba(0,229,255,.45)}
 </style>
 </head>
 <body>
 
-<!-- Corner brackets -->
 <div class="corner tl"></div>
 <div class="corner tr"></div>
 <div class="corner bl"></div>
 <div class="corner br"></div>
 
-<div id="hud">
+<div id="app">
 
   <!-- Header -->
   <div id="header">
-    <div id="title">JARVIS</div>
-    <div id="subtitle">Just&nbsp;A&nbsp;Rather&nbsp;Very&nbsp;Intelligent&nbsp;System</div>
-    <div id="status-bar">
-      <div id="status-dot"></div>
-      <div id="status-text">IDLE</div>
+    <div class="header-flank left">
+      <div class="hf-row">System&nbsp;&nbsp;<span>ONLINE</span></div>
+      <div class="hf-row">Voice&nbsp;&nbsp;&nbsp;<span>ACTIVE</span></div>
+      <div class="hf-row">Brain&nbsp;&nbsp;&nbsp;<span>CLAUDE</span></div>
+      <div class="hf-row">Network&nbsp;<span>SECURE</span></div>
+    </div>
+
+    <div id="title-block">
+      <div id="title">JARVIS</div>
+      <div id="tagline">Just A Rather Very Intelligent System</div>
+      <div id="status-pill">
+        <div id="sdot"></div>
+        <div id="slabel">IDLE</div>
+      </div>
+    </div>
+
+    <div class="header-flank right">
+      <div class="hf-row"><span>READY</span>&nbsp;&nbsp;Audio</div>
+      <div class="hf-row"><span id="hf-msgs">0</span>&nbsp;&nbsp;&nbsp;&nbsp;Messages</div>
+      <div class="hf-row"><span id="hf-up">00:00</span>&nbsp;Uptime</div>
+      <div class="hf-row"><span id="hf-date">--/--</span>&nbsp;Date</div>
     </div>
   </div>
 
-  <!-- Center ring + orb -->
-  <div id="center">
-    <!-- Flanking info panels -->
-    <div id="panels">
-      <div class="side-panel left">
-        <div class="panel-line">SYS: ONLINE</div>
-        <div class="panel-line">VOICE: ACTIVE</div>
-        <div class="panel-line">BRAIN: CLAUDE</div>
-        <div class="panel-line">NET: SECURE</div>
-        <div class="panel-line" id="panel-uptime">UP: 00:00:00</div>
-      </div>
-      <div class="side-panel right">
-        <div class="panel-line">AUDIO: READY</div>
-        <div class="panel-line">TOOLS: LOADED</div>
-        <div class="panel-line">MODE: VOICE</div>
-        <div class="panel-line">ENC: AES-256</div>
-        <div class="panel-line" id="panel-msgs">MSGS: 0</div>
-      </div>
+  <!-- Left panel -->
+  <div id="left">
+    <div class="card">
+      <div class="card-title">System Vitals</div>
+      <div class="data-row"><span class="data-key">CPU</span><span class="data-val green" id="v-cpu">--</span></div>
+      <div class="data-row"><span class="data-key">Memory</span><span class="data-val" id="v-mem">--</span></div>
+      <div class="data-row"><span class="data-key">STT</span><span class="data-val green">Whisper</span></div>
+      <div class="data-row"><span class="data-key">TTS</span><span class="data-val green">Daniel</span></div>
     </div>
+    <div class="card">
+      <div class="card-title">Active Tools</div>
+      <div class="data-row"><span class="data-key">Web Search</span><span class="data-val green">ON</span></div>
+      <div class="data-row"><span class="data-key">Mac Control</span><span class="data-val green">ON</span></div>
+      <div class="data-row"><span class="data-key">Obsidian</span><span class="data-val green">ON</span></div>
+      <div class="data-row"><span class="data-key">Plans</span><span class="data-val green">ON</span></div>
+      <div class="data-row"><span class="data-key">Smart Home</span><span class="data-val yellow">STANDBY</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Audio Level</div>
+      <div class="mini-bar-wrap" id="mini-bars"></div>
+    </div>
+  </div>
 
-    <div id="arc-container">
-      <div class="arc-ring"></div>
-      <div class="arc-ring"></div>
-      <div class="arc-ring"></div>
-      <div class="arc-ring"></div>
+  <!-- Center -->
+  <div id="center">
+    <div id="arc-wrap">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
       <div id="orb"></div>
     </div>
+    <div id="wave"></div>
   </div>
 
-  <!-- Waveform -->
-  <div id="waveform-section">
-    <div id="waveform"></div>
+  <!-- Right panel -->
+  <div id="right">
+    <div class="card">
+      <div class="card-title">Session Info</div>
+      <div class="data-row"><span class="data-key">User</span><span class="data-val">Boss</span></div>
+      <div class="data-row"><span class="data-key">Location</span><span class="data-val">DMV</span></div>
+      <div class="data-row"><span class="data-key">Mode</span><span class="data-val">Voice</span></div>
+      <div class="data-row"><span class="data-key">Model</span><span class="data-val">Sonnet 4.6</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Connections</div>
+      <div class="data-row"><span class="data-key">Claude API</span><span class="data-val green">LIVE</span></div>
+      <div class="data-row"><span class="data-key">Tavily</span><span class="data-val green">LIVE</span></div>
+      <div class="data-row"><span class="data-key">Obsidian</span><span class="data-val green">LIVE</span></div>
+      <div class="data-row"><span class="data-key">HomeKit</span><span class="data-val yellow">OFF</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Response Time</div>
+      <div class="data-row"><span class="data-key">Last</span><span class="data-val" id="v-rt">--</span></div>
+      <div class="data-row"><span class="data-key">Avg</span><span class="data-val" id="v-avg">--</span></div>
+    </div>
   </div>
 
-  <!-- Conversation log -->
-  <div id="log-section">
-    <div id="log-label"><span id="conn-dot"></span>Live&nbsp;Feed&nbsp;/&nbsp;Conversation</div>
-    <div id="log"></div>
+  <!-- Log -->
+  <div id="log-wrap">
+    <div id="log-box">
+      <div id="log-head"><span id="cdot"></span>Live Conversation Feed</div>
+      <div id="log-entries"></div>
+    </div>
   </div>
 
   <!-- Footer -->
   <div id="footer">
-    <span>JARVIS &copy; Stark Industries</span>
+    <span>JARVIS &copy; Peterson Automations</span>
     <span id="clock">--:--:--</span>
-    <span>Peterson Automation v1.0</span>
+    <span>v2.0 &nbsp;|&nbsp; Powered by Claude</span>
   </div>
 
 </div>
 
 <script>
-// ─── Waveform bars ───────────────────────────────────────────────
-(function buildWaveform() {
-  const BAR_COUNT = 32;
-  const wf = document.getElementById('waveform');
-  const heights = [];
-  const durations = [];
-  for (let i = 0; i < BAR_COUNT; i++) {
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    // Create a bell-curve-ish height distribution centred on middle
-    const t = Math.abs(i - BAR_COUNT / 2) / (BAR_COUNT / 2); // 0=center, 1=edge
-    const maxH = Math.round(12 + (1 - t * t) * 34); // 12–46 px
-    const dur  = (0.55 + Math.random() * 0.7).toFixed(2) + 's';
-    bar.style.setProperty('--h',   maxH + 'px');
-    bar.style.setProperty('--dur', dur);
-    heights.push(maxH);
-    durations.push(dur);
-    wf.appendChild(bar);
+// ── Waveform ──────────────────────────────────────────────────────
+(function(){
+  const N=40,w=document.getElementById('wave');
+  for(let i=0;i<N;i++){
+    const b=document.createElement('div');b.className='bar';
+    const t=Math.abs(i-N/2)/(N/2);
+    const h=Math.round(10+(1-t*t)*36);
+    const d=(.45+Math.random()*.75).toFixed(2)+'s';
+    b.style.setProperty('--h',h+'px');b.style.setProperty('--d',d);
+    w.appendChild(b);
   }
 })();
 
-// ─── Clock ────────────────────────────────────────────────────────
-function tickClock() {
-  const now = new Date();
-  document.getElementById('clock').textContent =
-    now.toTimeString().slice(0, 8);
+// ── Mini bars ─────────────────────────────────────────────────────
+(function(){
+  const mb=document.getElementById('mini-bars');
+  for(let i=0;i<18;i++){
+    const b=document.createElement('div');b.className='mini-bar';
+    b.style.height=Math.round(4+Math.random()*22)+'px';
+    b.style.animationDelay=(Math.random()*2).toFixed(2)+'s';
+    mb.appendChild(b);
+  }
+})();
+
+// ── Clock & date ──────────────────────────────────────────────────
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toTimeString().slice(0,8);
+  const mo=n.toLocaleString('default',{month:'2-digit'}),dy=String(n.getDate()).padStart(2,'0');
+  document.getElementById('hf-date').textContent=`${mo}/${dy}`;
 }
-setInterval(tickClock, 1000);
-tickClock();
+setInterval(tick,1000);tick();
 
-// ─── Uptime ───────────────────────────────────────────────────────
-const startTime = Date.now();
-setInterval(() => {
-  const s = Math.floor((Date.now() - startTime) / 1000);
-  const h = String(Math.floor(s / 3600)).padStart(2, '0');
-  const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-  const sec = String(s % 60).padStart(2, '0');
-  document.getElementById('panel-uptime').textContent = `UP: ${h}:${m}:${sec}`;
-}, 1000);
+// ── Uptime ────────────────────────────────────────────────────────
+const t0=Date.now();
+setInterval(()=>{
+  const s=Math.floor((Date.now()-t0)/1000);
+  const h=String(Math.floor(s/3600)).padStart(2,'0');
+  const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
+  document.getElementById('hf-up').textContent=`${h}:${m}`;
+},1000);
 
-// ─── Status management ────────────────────────────────────────────
-const STATUS_COLORS = {
-  idle:      'var(--dim)',
-  listening: 'var(--green)',
-  thinking:  'var(--yellow)',
-  speaking:  'var(--cyan)',
-};
-const STATUS_LABELS = {
-  idle:      'IDLE',
-  listening: 'LISTENING',
-  thinking:  'PROCESSING',
-  speaking:  'SPEAKING',
-};
+// ── Simulated CPU/Mem ─────────────────────────────────────────────
+setInterval(()=>{
+  document.getElementById('v-cpu').textContent=Math.round(8+Math.random()*12)+'%';
+  document.getElementById('v-mem').textContent=Math.round(340+Math.random()*40)+' MB';
+},3000);
 
-let currentStatus = 'idle';
+// ── Status ────────────────────────────────────────────────────────
+const SC={idle:'#1565c0',listening:'var(--g)',thinking:'var(--y)',speaking:'var(--c)'};
+const SL={idle:'IDLE',listening:'LISTENING',thinking:'PROCESSING',speaking:'SPEAKING'};
 
-function setStatus(s) {
-  currentStatus = s;
-  const color = STATUS_COLORS[s] || STATUS_COLORS.idle;
-  const label = STATUS_LABELS[s] || s.toUpperCase();
-  const dot  = document.getElementById('status-dot');
-  const text = document.getElementById('status-text');
-  dot.style.background  = color;
-  dot.style.boxShadow   = `0 0 8px ${color}, 0 0 16px ${color}`;
-  text.style.color      = color;
-  text.textContent      = label;
-
-  // Body class drives CSS animations
-  document.body.className = '';
-  if (s !== 'idle') document.body.classList.add(s);
+function setStatus(s){
+  const c=SC[s]||SC.idle;
+  document.getElementById('sdot').style.cssText=`background:${c};box-shadow:0 0 8px ${c},0 0 16px ${c}`;
+  document.getElementById('slabel').style.color=c;
+  document.getElementById('slabel').textContent=SL[s]||s.toUpperCase();
+  document.body.className=s==='idle'?'':s;
 }
-
 setStatus('idle');
 
-// ─── Conversation log ─────────────────────────────────────────────
-const MAX_MESSAGES = 6;
-let msgCount = 0;
-
-function addMessage(role, text) {
-  msgCount++;
-  document.getElementById('panel-msgs').textContent = `MSGS: ${msgCount}`;
-
-  const log = document.getElementById('log');
-  const entry = document.createElement('div');
-  const isJarvis = role.toLowerCase() === 'jarvis' || role.toLowerCase() === 'assistant';
-  entry.className = 'log-entry' + (isJarvis ? ' jarvis-entry' : '');
-
-  const roleEl = document.createElement('div');
-  roleEl.className = 'log-role ' + (isJarvis ? 'jarvis' : 'user');
-  roleEl.textContent = isJarvis ? 'JARVIS' : 'YOU';
-
-  const textEl = document.createElement('div');
-  textEl.className = 'log-text';
-  textEl.textContent = text;
-
-  entry.appendChild(roleEl);
-  entry.appendChild(textEl);
-  log.appendChild(entry);
-
-  // Keep max 6 entries
-  while (log.children.length > MAX_MESSAGES) {
-    log.removeChild(log.firstChild);
-  }
-
-  // Scroll to bottom
-  const section = document.getElementById('log-section');
-  section.scrollTop = section.scrollHeight;
+// ── Response timing ───────────────────────────────────────────────
+let thinkStart=null;const rtSamples=[];
+function startThink(){thinkStart=Date.now();}
+function stopThink(){
+  if(!thinkStart)return;
+  const ms=Date.now()-thinkStart;thinkStart=null;
+  document.getElementById('v-rt').textContent=(ms/1000).toFixed(1)+'s';
+  rtSamples.push(ms);
+  const avg=rtSamples.reduce((a,b)=>a+b,0)/rtSamples.length;
+  document.getElementById('v-avg').textContent=(avg/1000).toFixed(1)+'s';
 }
 
-// ─── SSE connection ───────────────────────────────────────────────
-const connDot = document.getElementById('conn-dot');
+// ── Log ───────────────────────────────────────────────────────────
+let msgs=0;
+function addMsg(role,text){
+  msgs++;document.getElementById('hf-msgs').textContent=msgs;
+  const log=document.getElementById('log-entries');
+  const isJ=role.toLowerCase()==='jarvis'||role.toLowerCase()==='assistant';
+  const e=document.createElement('div');
+  e.className='entry'+(isJ?' jar-entry':'');
+  e.innerHTML=`<div class="erole ${isJ?'jar':'you'}">${isJ?'JARVIS':'YOU'}</div><div class="etext">${text}</div>`;
+  log.appendChild(e);
+  while(log.children.length>6)log.removeChild(log.firstChild);
+  document.getElementById('log-box').scrollTop=9999;
+}
 
-function connectSSE() {
-  const src = new EventSource('/events');
-
-  src.onopen = () => {
-    connDot.classList.add('live');
-  };
-
-  src.onmessage = (e) => {
-    let data;
-    try { data = JSON.parse(e.data); } catch { return; }
-
-    if (data.type === 'status' && data.status) {
-      setStatus(data.status);
-    } else if (data.type === 'message' && data.role && data.text) {
-      addMessage(data.role, data.text);
-    } else if (data.type === 'ping') {
-      // heartbeat — do nothing
+// ── SSE ───────────────────────────────────────────────────────────
+const cdot=document.getElementById('cdot');
+function connect(){
+  const src=new EventSource('/events');
+  src.onopen=()=>cdot.classList.add('live');
+  src.onmessage=(ev)=>{
+    let d;try{d=JSON.parse(ev.data)}catch{return}
+    if(d.type==='status'&&d.status){
+      if(d.status==='thinking')startThink();
+      else if(d.status==='speaking')stopThink();
+      setStatus(d.status);
+    }else if(d.type==='message'&&d.role&&d.text){
+      addMsg(d.role,d.text);
     }
   };
-
-  src.onerror = () => {
-    connDot.classList.remove('live');
-    src.close();
-    // Retry after 3s
-    setTimeout(connectSSE, 3000);
-  };
+  src.onerror=()=>{cdot.classList.remove('live');src.close();setTimeout(connect,3000)};
 }
-
-connectSSE();
+connect();
 </script>
 </body>
 </html>
