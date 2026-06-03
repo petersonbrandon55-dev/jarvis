@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PETERSON AUTOMATIONS // MISSION CONTROL</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --green:      #00ff41;
+    --green-dim:  #00a028;
+    --green-dark: #003310;
+    --green-glow: rgba(0,255,65,0.15);
+    --amber:      #ffb000;
+    --amber-dim:  #7a5500;
+    --red:        #ff3333;
+    --bg:         #020902;
+    --panel-bg:   #050f05;
+    --border:     #0d2a0d;
+    --text-dim:   #1a4020;
+    --scanline:   rgba(0,20,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--green);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--scanline) 2px,
+      var(--scanline) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* CRT vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────────── */
+  .header {
+    flex-shrink: 0;
+    height: 64px;
+    border-bottom: 1px solid var(--green-dim);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: linear-gradient(180deg, #030f03 0%, var(--bg) 100%);
+    position: relative;
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    border: 2px solid var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 0 12px var(--green-glow), inset 0 0 8px var(--green-glow);
+    animation: pulse-border 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 12px var(--green-glow), inset 0 0 8px var(--green-glow); }
+    50% { box-shadow: 0 0 24px rgba(0,255,65,0.4), inset 0 0 16px rgba(0,255,65,0.2); }
+  }
+
+  .title-group { display: flex; flex-direction: column; }
+
+  .title-main {
+    font-family: 'Orbitron', monospace;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--green);
+    text-shadow: 0 0 16px rgba(0,255,65,0.6);
+  }
+
+  .title-sub {
+    font-size: 10px;
+    color: var(--green-dim);
+    letter-spacing: 0.3em;
+  }
+
+  .header-center {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+
+  .stat-block { text-align: center; }
+  .stat-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 18px;
+    color: var(--amber);
+    text-shadow: 0 0 10px rgba(255,176,0,0.5);
+  }
+  .stat-label { font-size: 9px; color: var(--green-dim); letter-spacing: 0.2em; }
+
+  .header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .clock {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(0,255,65,0.4);
+    letter-spacing: 0.1em;
+  }
+
+  .date-str { font-size: 10px; color: var(--green-dim); letter-spacing: 0.2em; }
+
+  /* ── DIVIDER STRIP ──────────────────────────────────────── */
+  .div-strip {
+    flex-shrink: 0;
+    height: 22px;
+    background: var(--green-dark);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 40px;
+    font-size: 9px;
+    color: var(--green-dim);
+    letter-spacing: 0.25em;
+  }
+
+  .strip-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    margin-right: 6px;
+    animation: blink-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  /* ── AGENT GRID ─────────────────────────────────────────── */
+  .agent-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .agent-panel {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    position: relative;
+    background: var(--panel-bg);
+    overflow: hidden;
+  }
+
+  .agent-panel:last-child { border-right: none; }
+
+  /* corner decorations */
+  .agent-panel::before,
+  .agent-panel::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: var(--green-dim);
+    border-style: solid;
+    z-index: 10;
+  }
+  .agent-panel::before { top: 48px; left: 0; border-width: 0 0 1px 1px; }
+  .agent-panel::after  { top: 48px; right: 0; border-width: 0 1px 1px 0; }
+
+  /* ── AGENT HEADER ───────────────────────────────────────── */
+  .agent-header {
+    flex-shrink: 0;
+    height: 48px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: linear-gradient(180deg, #030f03, var(--panel-bg));
+  }
+
+  .agent-id {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--green-dim);
+    box-shadow: none;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+
+  .status-dot.active {
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green), 0 0 20px rgba(0,255,65,0.3);
+    animation: dot-pulse 0.8s ease-in-out infinite;
+  }
+
+  .status-dot.done {
+    background: var(--amber);
+    box-shadow: 0 0 10px var(--amber);
+    animation: none;
+  }
+
+  @keyframes dot-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .agent-name-block { display: flex; flex-direction: column; }
+
+  .agent-code {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    color: var(--green-dim);
+    letter-spacing: 0.3em;
+  }
+
+  .agent-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 8px rgba(0,255,65,0.4);
+  }
+
+  .agent-status-text {
+    font-size: 9px;
+    color: var(--green-dim);
+    letter-spacing: 0.25em;
+  }
+
+  .agent-status-text.active-text { color: var(--amber); }
+
+  /* ── OUTPUT AREA ────────────────────────────────────────── */
+  .output-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    color: var(--green);
+    scrollbar-width: thin;
+    scrollbar-color: var(--green-dark) transparent;
+    position: relative;
+  }
+
+  .output-area::-webkit-scrollbar { width: 4px; }
+  .output-area::-webkit-scrollbar-track { background: transparent; }
+  .output-area::-webkit-scrollbar-thumb { background: var(--green-dark); border-radius: 2px; }
+
+  .output-placeholder {
+    color: var(--text-dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    line-height: 2;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--green);
+    vertical-align: text-bottom;
+    animation: blink-cursor 1s step-end infinite;
+    margin-left: 2px;
+  }
+
+  @keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ── INPUT AREA ─────────────────────────────────────────── */
+  .input-area {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    background: #020902;
+    padding: 12px 16px;
+  }
+
+  .input-label {
+    font-size: 9px;
+    color: var(--green-dim);
+    letter-spacing: 0.3em;
+    margin-bottom: 6px;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .input-prompt {
+    color: var(--green);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .agent-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--green-dim);
+    color: var(--green);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    font-size: 13px;
+    outline: none;
+    padding: 2px 4px;
+    caret-color: var(--green);
+  }
+
+  .agent-input::placeholder { color: var(--text-dim); }
+  .agent-input:focus { border-bottom-color: var(--green); }
+
+  .run-btn {
+    background: transparent;
+    border: 1px solid var(--green-dim);
+    color: var(--green-dim);
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .run-btn:hover {
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 8px var(--green-glow);
+    background: rgba(0,255,65,0.05);
+  }
+
+  .run-btn:active { transform: scale(0.97); }
+  .run-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* ── STATUS BAR ─────────────────────────────────────────── */
+  .statusbar {
+    flex-shrink: 0;
+    height: 24px;
+    border-top: 1px solid var(--border);
+    background: var(--green-dark);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 32px;
+    font-size: 9px;
+    color: var(--green-dim);
+    letter-spacing: 0.2em;
+  }
+
+  .sb-item { display: flex; align-items: center; gap: 6px; }
+  .sb-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 4px var(--green);
+  }
+
+  .sb-right { margin-left: auto; }
+
+  /* ── SESSION MEMORY STRIP ───────────────────────────────── */
+  .session-strip {
+    flex-shrink: 0;
+    height: 28px;
+    background: #060f06;
+    border-bottom: 1px solid #0a1f0a;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    font-size: 10px;
+    overflow: hidden;
+  }
+
+  .session-label {
+    color: var(--amber);
+    letter-spacing: 0.2em;
+    flex-shrink: 0;
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+  }
+
+  .session-item {
+    color: var(--green-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 380px;
+    transition: color 0.4s;
+  }
+
+  .session-item.updated { color: var(--green); }
+
+  .session-divider { color: var(--text-dim); flex-shrink: 0; }
+
+  .session-note {
+    color: var(--text-dim);
+    font-size: 9px;
+    flex-shrink: 0;
+    margin-left: auto;
+    letter-spacing: 0.15em;
+  }
+
+  .clear-btn {
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    color: var(--text-dim);
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 0.2em;
+    padding: 3px 7px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+
+  .clear-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* Grid bg lines */
+  .agent-panel .grid-bg {
+    position: absolute;
+    inset: 48px 0 0 0;
+    background-image:
+      linear-gradient(var(--green-dark) 1px, transparent 1px),
+      linear-gradient(90deg, var(--green-dark) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .output-area, .input-area, .agent-header { position: relative; z-index: 1; }
+
+  /* Highlight for search results */
+  .output-area .search-notice {
+    color: var(--amber);
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo-mark">PA</div>
+    <div class="title-group">
+      <div class="title-main">PETERSON AUTOMATIONS</div>
+      <div class="title-sub">// MISSION CONTROL — HAMPTON ROADS, VA</div>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <div class="stat-block">
+      <div class="stat-val" id="days-exam">—</div>
+      <div class="stat-label">DAYS TO EXAM</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-val" id="days-booz">—</div>
+      <div class="stat-label">DAYS TO BOOZ ALLEN</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-val">3</div>
+      <div class="stat-label">AGENTS ONLINE</div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="clock" id="clock">00:00:00</div>
+    <div class="date-str" id="date-str">—</div>
+  </div>
+</header>
+
+<!-- DIVIDER STRIP -->
+<div class="div-strip">
+  <span><span class="strip-dot"></span>SYSTEM ONLINE</span>
+  <span>TARGET MARKET: HAMPTON ROADS LOCAL SERVICE BUSINESSES</span>
+  <span>STACK: N8N · PYTHON · CLAUDE</span>
+  <span>OPERATOR: BRANDON PETERSON</span>
+</div>
+
+<!-- SESSION MEMORY STRIP -->
+<div class="session-strip" id="session-strip">
+  <span class="session-label">// MEMORY</span>
+  <span class="session-item" id="mem-hawk">HAWK: no data yet</span>
+  <span class="session-divider">·</span>
+  <span class="session-item" id="mem-cipher">CIPHER: no data yet</span>
+  <span class="session-divider">·</span>
+  <span class="session-note">ORACLE reads this automatically</span>
+  <button class="clear-btn" onclick="clearSession()">CLEAR</button>
+</div>
+
+<!-- AGENT GRID -->
+<div class="agent-grid">
+
+  <!-- HAWK — Lead Scout -->
+  <div class="agent-panel">
+    <div class="grid-bg"></div>
+    <div class="agent-header">
+      <div class="agent-id">
+        <div class="status-dot" id="dot-hawk"></div>
+        <div class="agent-name-block">
+          <div class="agent-code">AGENT-01 · LEAD SCOUT</div>
+          <div class="agent-name">HAWK</div>
+        </div>
+      </div>
+      <div class="agent-status-text" id="status-hawk">STANDBY</div>
+    </div>
+
+    <div class="output-area" id="out-hawk">
+      <div class="output-placeholder">
+> HAWK ONLINE<br>
+> HUNTING GROUND: HAMPTON ROADS, VA<br>
+><br>
+> Finds targets. Assesses fast. Reports clean.<br>
+> No wasted words — just viable leads.<br>
+><br>
+> "lawn care Virginia Beach"<br>
+> "pool maintenance Chesapeake"<br>
+> "HVAC small business Norfolk"
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-label">// HUNT TARGET</div>
+      <div class="input-row">
+        <span class="input-prompt">›</span>
+        <input class="agent-input" id="inp-hawk" placeholder="business type + area..." />
+        <button class="run-btn" id="btn-hawk" onclick="runAgent('hawk')">EXECUTE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CIPHER — Outreach Drafter -->
+  <div class="agent-panel">
+    <div class="grid-bg"></div>
+    <div class="agent-header">
+      <div class="agent-id">
+        <div class="status-dot" id="dot-cipher"></div>
+        <div class="agent-name-block">
+          <div class="agent-code">AGENT-02 · OUTREACH</div>
+          <div class="agent-name">CIPHER</div>
+        </div>
+      </div>
+      <div class="agent-status-text" id="status-cipher">STANDBY</div>
+    </div>
+
+    <div class="output-area" id="out-cipher">
+      <div class="output-placeholder">
+> CIPHER ONLINE<br>
+> READS PEOPLE. WRITES MESSAGES THAT LAND.<br>
+><br>
+> Knows what makes an owner write back.<br>
+> Delivers text + email, always.<br>
+><br>
+> "Mike's Lawn Care, VB, dad knows the owner"<br>
+> "Pool company, no reviews, found via HAWK"<br>
+> "HVAC guy, 4.2 stars, owner named Derek"
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-label">// LEAD PROFILE</div>
+      <div class="input-row">
+        <span class="input-prompt">›</span>
+        <input class="agent-input" id="inp-cipher" placeholder="business, type, connection, any context..." />
+        <button class="run-btn" id="btn-cipher" onclick="runAgent('cipher')">EXECUTE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORACLE — Pipeline Tracker -->
+  <div class="agent-panel">
+    <div class="grid-bg"></div>
+    <div class="agent-header">
+      <div class="agent-id">
+        <div class="status-dot" id="dot-oracle"></div>
+        <div class="agent-name-block">
+          <div class="agent-code">AGENT-03 · PIPELINE</div>
+          <div class="agent-name">ORACLE</div>
+        </div>
+      </div>
+      <div class="agent-status-text" id="status-oracle">STANDBY</div>
+    </div>
+
+    <div class="output-area" id="out-oracle">
+      <div class="output-placeholder">
+> ORACLE ONLINE<br>
+> SEES THE WHOLE BOARD.<br>
+><br>
+> Tracks what's moving. Flags what's stalled.<br>
+> Gives you one clear move, not a list.<br>
+><br>
+> "full pipeline review"<br>
+> "what do I do next to get first client"<br>
+> "what should I charge for review automation"<br>
+> "contacted Mike's Lawn Care, no reply yet"
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-label">// STRATEGIC QUERY</div>
+      <div class="input-row">
+        <span class="input-prompt">›</span>
+        <input class="agent-input" id="inp-oracle" placeholder="pipeline review / next move / pricing..." />
+        <button class="run-btn" id="btn-oracle" onclick="runAgent('oracle')">EXECUTE</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <div class="sb-item"><div class="sb-dot"></div>MISSION CONTROL ONLINE</div>
+  <div class="sb-item">ANTHROPIC API: CONNECTED</div>
+  <div class="sb-item">TARGET: LOCAL SERVICE BUSINESSES · HAMPTON ROADS VA</div>
+  <div class="sb-right" id="sb-time">—</div>
+</div>
+
+<script>
+  // ── Clock ──────────────────────────────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toTimeString().slice(0, 8);
+    document.getElementById('date-str').textContent =
+      now.toDateString().toUpperCase();
+    document.getElementById('sb-time').textContent =
+      'LOCAL TIME: ' + now.toTimeString().slice(0,8);
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── Countdowns ─────────────────────────────────────────────────────
+  function updateCountdowns() {
+    const now = new Date();
+    const exam  = new Date('2026-07-10');
+    const booz  = new Date('2026-07-13');
+    const msDay = 1000 * 60 * 60 * 24;
+    document.getElementById('days-exam').textContent =
+      Math.max(0, Math.ceil((exam - now) / msDay));
+    document.getElementById('days-booz').textContent =
+      Math.max(0, Math.ceil((booz - now) / msDay));
+  }
+  updateCountdowns();
+  setInterval(updateCountdowns, 60000);
+
+  // ── Agent runner ───────────────────────────────────────────────────
+  function runAgent(agentName) {
+    const input   = document.getElementById(`inp-${agentName}`);
+    const output  = document.getElementById(`out-${agentName}`);
+    const dot     = document.getElementById(`dot-${agentName}`);
+    const statusT = document.getElementById(`status-${agentName}`);
+    const btn     = document.getElementById(`btn-${agentName}`);
+
+    const query = input.value.trim();
+    if (!query) return;
+
+    // UI: activate
+    btn.disabled = true;
+    dot.className = 'status-dot active';
+    statusT.textContent = 'PROCESSING...';
+    statusT.className = 'agent-status-text active-text';
+
+    output.innerHTML = `<span style="color:var(--green-dim)">// EXECUTING — ${new Date().toTimeString().slice(0,8)}</span>\n<span style="color:var(--green-dim)">// INPUT: ${escHtml(query)}</span>\n\n`;
+
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    output.appendChild(cursor);
+
+    const url = `/stream?agent=${encodeURIComponent(agentName)}&input=${encodeURIComponent(query)}`;
+    const es = new EventSource(url);
+    let fullText = '';
+
+    es.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.done) {
+        es.close();
+        cursor.remove();
+        dot.className = 'status-dot done';
+        statusT.textContent = 'COMPLETE';
+        statusT.className = 'agent-status-text';
+        btn.disabled = false;
+
+        // Append completion timestamp
+        const ts = document.createElement('span');
+        ts.style.color = 'var(--green-dim)';
+        ts.style.fontSize = '10px';
+        ts.textContent = `\n\n// DONE — ${new Date().toTimeString().slice(0,8)}`;
+        output.appendChild(ts);
+
+        // Reset dot after 4s
+        setTimeout(() => {
+          dot.className = 'status-dot';
+          statusT.textContent = 'STANDBY';
+          statusT.className = 'agent-status-text';
+        }, 4000);
+        return;
+      }
+
+      if (data.token) {
+        fullText += data.token;
+        // Insert before cursor
+        const txt = document.createTextNode(data.token);
+        output.insertBefore(txt, cursor);
+        output.scrollTop = output.scrollHeight;
+      }
+    };
+
+    es.onerror = () => {
+      es.close();
+      cursor.remove();
+      dot.className = 'status-dot';
+      statusT.textContent = 'ERROR';
+      btn.disabled = false;
+      const err = document.createElement('span');
+      err.style.color = 'var(--red)';
+      err.textContent = '\n\n// CONNECTION ERROR — check server';
+      output.appendChild(err);
+    };
+  }
+
+  // ── Session memory polling ─────────────────────────────────
+  let prevHawk = '', prevCipher = '';
+
+  function updateSession() {
+    fetch('/session').then(r => r.json()).then(data => {
+      const hawkEl   = document.getElementById('mem-hawk');
+      const cipherEl = document.getElementById('mem-cipher');
+
+      if (data.hawk && data.hawk.length > 0) {
+        const last = data.hawk[data.hawk.length - 1];
+        const text = `HAWK [${last.timestamp}]: searched "${last.query}" → ${last.summary.slice(0,80)}${last.summary.length > 80 ? '…' : ''}`;
+        if (text !== prevHawk) {
+          hawkEl.textContent = text;
+          hawkEl.classList.add('updated');
+          setTimeout(() => hawkEl.classList.remove('updated'), 2000);
+          prevHawk = text;
+        }
+      }
+
+      if (data.cipher && data.cipher.length > 0) {
+        const last = data.cipher[data.cipher.length - 1];
+        const text = `CIPHER [${last.timestamp}]: drafted for "${last.lead.slice(0,50)}${last.lead.length > 50 ? '…' : ''}"`;
+        if (text !== prevCipher) {
+          cipherEl.textContent = text;
+          cipherEl.classList.add('updated');
+          setTimeout(() => cipherEl.classList.remove('updated'), 2000);
+          prevCipher = text;
+        }
+      }
+    }).catch(() => {});
+  }
+
+  updateSession();
+  setInterval(updateSession, 4000);
+
+  function clearSession() {
+    fetch('/session/clear', { method: 'POST' }).then(() => {
+      document.getElementById('mem-hawk').textContent   = 'HAWK: no data yet';
+      document.getElementById('mem-cipher').textContent = 'CIPHER: no data yet';
+      prevHawk = ''; prevCipher = '';
+    });
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Enter key support
+  ['hawk','cipher','oracle'].forEach(name => {
+    document.getElementById(`inp-${name}`)
+      .addEventListener('keydown', e => {
+        if (e.key === 'Enter') runAgent(name);
+      });
+  });
+</script>
+</body>
+</html>

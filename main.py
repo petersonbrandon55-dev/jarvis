@@ -8,6 +8,10 @@ Usage:
     python main.py --text       # Text-only mode (no mic/speakers needed)
 """
 import argparse
+import sys
+
+
+SHUTDOWN_PHRASES = ("shut down", "shutdown", "goodbye", "bye jarvis", "power off", "exit", "quit")
 
 
 def build_tool_handlers() -> dict:
@@ -19,6 +23,9 @@ def build_tool_handlers() -> dict:
         get_todays_tasks, get_current_week_plan, get_week_plan,
         add_task, mark_task_done, list_week_plans,
     )
+    from tools.key_dates import get_key_dates
+    from tools.quiz import security_plus_quiz
+    from tools.homelab import get_homelab_status
     return {
         "web_search": web_search,
         "open_application": open_application,
@@ -33,6 +40,9 @@ def build_tool_handlers() -> dict:
         "add_task": add_task,
         "mark_task_done": mark_task_done,
         "list_week_plans": list_week_plans,
+        "get_key_dates": get_key_dates,
+        "security_plus_quiz": security_plus_quiz,
+        "get_homelab_status": get_homelab_status,
     }
 
 
@@ -93,9 +103,11 @@ def run_voice_mode(use_terminal=True, use_web=False):
         f"on {now.strftime('%A, %B %d')}. "
         "Give Brandon a natural spoken startup greeting that includes: "
         "1) a greeting with the time and day, "
-        "2) current weather for the DMV area (use web_search), "
-        "3) his tasks for today (use get_todays_tasks). "
-        "Keep it conversational and concise — you're speaking aloud, not writing a report."
+        "2) current weather for the Hampton Roads VA area (use web_search), "
+        "3) countdown to his Security+ exam and Booz Allen start date (use get_key_dates) — work this in naturally, like a coach would, "
+        "4) his tasks for today (use get_todays_tasks). "
+        "Keep it tight and conversational — you're speaking aloud, not writing a report. "
+        "Sound like someone in his corner, not a calendar app."
     )
     briefing = brain.think(briefing_prompt)
     hud.set_status("speaking")
@@ -117,7 +129,7 @@ def run_voice_mode(use_terminal=True, use_web=False):
 
             hud.add_message("user", user_input)
 
-            if user_input.lower() in ("goodbye", "bye jarvis", "shut down", "exit"):
+            if any(p in user_input.lower() for p in SHUTDOWN_PHRASES):
                 hud.set_status("speaking")
                 listener.muted = True
                 speaker.speak("Understood. Going offline. Goodbye, Boss.")
@@ -139,6 +151,7 @@ def run_voice_mode(use_terminal=True, use_web=False):
             break
 
     hud.stop()
+    sys.exit(0)
 
 
 def run_text_mode():
