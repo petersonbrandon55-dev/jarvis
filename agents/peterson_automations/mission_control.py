@@ -11,7 +11,7 @@ import json
 import threading
 import webbrowser
 from pathlib import Path
-from flask import Flask, Response, render_template, request, stream_with_context
+from flask import Flask, Response, render_template, request, stream_with_context, jsonify, send_file
 
 from agents.peterson_automations.agents import hawk, cipher, oracle
 from agents.peterson_automations import session_log
@@ -31,6 +31,11 @@ AGENT_MAP = {
 @app.route("/")
 def index():
     return render_template("mission_control.html")
+
+
+@app.route("/landing")
+def landing():
+    return send_file(Path(__file__).parent.parent.parent / "website" / "index.html")
 
 
 @app.route("/stream")

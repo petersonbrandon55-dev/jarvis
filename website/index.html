@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peterson Automations — Hampton Roads, VA</title>
+<meta name="description" content="We automate the follow-up, review requests, and lead capture your local service business needs — so you stop losing jobs you already did.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --navy:   #0d1b2e;
+    --navy2:  #132236;
+    --green:  #00c47a;
+    --green2: #00a365;
+    --white:  #ffffff;
+    --off:    #f3f7fb;
+    --muted:  #8a9ab5;
+    --text:   #1a2b42;
+    --border: #dce5f0;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    background: rgba(13,27,46,0.96);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 5vw;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .nav-logo {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--white);
+    letter-spacing: 0.01em;
+  }
+
+  .nav-logo span { color: var(--green); }
+
+  .nav-cta {
+    background: var(--green);
+    color: var(--navy);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .nav-cta:hover { background: #00d988; }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--navy);
+    padding: 130px 5vw 90px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,196,122,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: rgba(0,196,122,0.12);
+    color: var(--green);
+    border: 1px solid rgba(0,196,122,0.25);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    margin-bottom: 28px;
+  }
+
+  .hero h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(32px, 5vw, 58px);
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.12;
+    max-width: 820px;
+    margin: 0 auto 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .hero h1 em { font-style: normal; color: var(--green); }
+
+  .hero-sub {
+    font-size: clamp(15px, 2vw, 18px);
+    color: rgba(255,255,255,0.6);
+    max-width: 560px;
+    margin: 0 auto 40px;
+    line-height: 1.65;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--green);
+    color: var(--navy);
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 30px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+
+  .btn-primary:hover { background: #00d988; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,196,122,0.3); }
+
+  .btn-secondary {
+    background: transparent;
+    color: rgba(255,255,255,0.75);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 14px 24px;
+    border-radius: 10px;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: all 0.2s;
+    display: inline-block;
+  }
+
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.35); color: var(--white); }
+
+  /* ── PROOF BAR ── */
+  .proof-bar {
+    background: var(--navy2);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 16px 5vw;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── PROBLEM ── */
+  .problem {
+    padding: 80px 5vw;
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--green2);
+    margin-bottom: 14px;
+  }
+
+  .problem h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(24px, 3.5vw, 38px);
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .problem p {
+    font-size: 16px;
+    color: #4a6080;
+    line-height: 1.7;
+    max-width: 660px;
+    margin: 0 auto;
+  }
+
+  /* ── SERVICES ── */
+  .services {
+    background: var(--off);
+    padding: 80px 5vw;
+  }
+
+  .services-inner { max-width: 1060px; margin: 0 auto; }
+
+  .services-header { text-align: center; margin-bottom: 52px; }
+
+  .services-header h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(24px, 3.5vw, 36px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .services-header p { font-size: 16px; color: #4a6080; }
+
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 20px;
+  }
+
+  .service-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .service-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.08); transform: translateY(-2px); }
+
+  .service-icon {
+    width: 44px; height: 44px;
+    background: rgba(0,196,122,0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+
+  .service-card h3 {
+    font-family: 'Sora', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .service-card p { font-size: 14px; color: #4a6080; line-height: 1.65; }
+
+  .service-result {
+    margin-top: 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--green2);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .service-result::before { content: '→'; }
+
+  /* ── HOW IT WORKS ── */
+  .how { padding: 80px 5vw; max-width: 860px; margin: 0 auto; }
+
+  .how-header { text-align: center; margin-bottom: 52px; }
+
+  .how-header h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(24px, 3.5vw, 36px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .steps { display: flex; flex-direction: column; }
+
+  .step {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px; top: 46px;
+    width: 2px;
+    height: calc(100% - 22px);
+    background: var(--border);
+  }
+
+  .step-num {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  .step-body { padding-bottom: 36px; }
+
+  .step-body h3 {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .step-body p { font-size: 14px; color: #4a6080; line-height: 1.65; }
+
+  /* ── WHO ── */
+  .who { background: var(--off); padding: 80px 5vw; }
+
+  .who-inner { max-width: 860px; margin: 0 auto; text-align: center; }
+
+  .who-inner h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(24px, 3.5vw, 36px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .who-inner > p { font-size: 16px; color: #4a6080; margin-bottom: 40px; }
+
+  .niches { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+  .niche-tag {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 8px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  /* ── CTA ── */
+  .cta-section {
+    background: var(--navy);
+    padding: 90px 5vw;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(0,196,122,0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .cta-section h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(26px, 4vw, 44px);
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+    line-height: 1.15;
+  }
+
+  .cta-section h2 em { font-style: normal; color: var(--green); }
+
+  .cta-section p {
+    font-size: 16px;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 36px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .contact-options { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+
+  .contact-chip {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--white);
+    border-radius: 10px;
+    padding: 14px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .contact-chip:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); transform: translateY(-1px); }
+
+  .contact-chip.primary { background: var(--green); border-color: var(--green); color: var(--navy); }
+  .contact-chip.primary:hover { background: #00d988; }
+
+  .cta-note { font-size: 13px; color: rgba(255,255,255,0.3); margin-top: 12px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #07111e;
+    padding: 28px 5vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .footer-logo { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 15px; color: rgba(255,255,255,0.5); }
+  .footer-logo span { color: var(--green); }
+  footer p { font-size: 12px; color: rgba(255,255,255,0.25); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Peterson <span>Automations</span></div>
+  <a href="#contact" class="nav-cta">Get a Free Demo</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">Hampton Roads, VA · Local Service Businesses</div>
+  <h1>The texts you forget to send.<br><em>Automated.</em></h1>
+  <p class="hero-sub">We build hands-off follow-up systems for lawn care, pool, HVAC, and home service businesses in Hampton Roads — so every customer gets followed up with, every time.</p>
+  <div class="hero-actions">
+    <a href="#contact" class="btn-primary">See How It Works — Free 15 Min</a>
+    <a href="#services" class="btn-secondary">What We Build</a>
+  </div>
+</section>
+
+<div class="proof-bar">
+  Built for local businesses in Virginia Beach · Chesapeake · Norfolk · Suffolk · Portsmouth · Hampton
+</div>
+
+<section class="problem">
+  <div class="section-label">The problem</div>
+  <h2>You're leaving reviews, repeat jobs,<br>and referrals on the table every week.</h2>
+  <p>After a long day on the job, nobody's following up with customers, asking for Google reviews, or responding to new leads fast enough. That's not laziness — that's just how it goes when you're running a real business. We fix that.</p>
+</section>
+
+<section class="services" id="services">
+  <div class="services-inner">
+    <div class="services-header">
+      <div class="section-label">What we build</div>
+      <h2>The automations that pay for themselves</h2>
+      <p>Set it up once. It runs itself every month after that.</p>
+    </div>
+    <div class="service-grid">
+      <div class="service-card">
+        <div class="service-icon">💬</div>
+        <h3>Post-Job Follow-Up Texts</h3>
+        <p>A personalized text goes out automatically a few hours after the job — checking in, thanking the customer, keeping the door open for their next call.</p>
+        <div class="service-result">More repeat bookings, zero extra effort</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">⭐</div>
+        <h3>Google Review Requests</h3>
+        <p>Happy customers forget to leave reviews. We remind them automatically with a direct link right after the job. More reviews = more calls from Google.</p>
+        <div class="service-result">Higher Google ranking, more organic leads</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">⚡</div>
+        <h3>Instant Lead Response</h3>
+        <p>Someone fills out your form or sends a Facebook message? They get a response in under 2 minutes — day or night. Fast response wins the job.</p>
+        <div class="service-result">More jobs closed, fewer leads lost to competitors</div>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">📅</div>
+        <h3>Appointment Scheduling</h3>
+        <p>Stop the back-and-forth. Customers pick a time that works, it goes straight into your calendar, and they get a confirmation text automatically.</p>
+        <div class="service-result">Less phone tag, more confirmed bookings</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="how-header">
+    <div class="section-label">How it works</div>
+    <h2>Simple setup, runs forever</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Free 15-minute call</h3>
+        <p>We learn how your business runs — what tools you use, how jobs get logged, what you're losing right now. No pitch, just listening.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>We build it — you don't touch a thing</h3>
+        <p>We build the automations around your existing setup. No new apps to learn, no changes to how you run your business. Usually done in under a week.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>It runs. You get results.</h3>
+        <p>Every job triggers the follow-up. Every follow-up asks for the review. Every new lead gets a reply in minutes. You'll see it working within the first week.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Monthly retainer — we keep it running</h3>
+        <p>We monitor, update, and improve your automations every month. If something breaks, we fix it before you notice.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="who">
+  <div class="who-inner">
+    <div class="section-label">Who this is for</div>
+    <h2>Hampton Roads service businesses<br>doing real work every day</h2>
+    <p>If you have customers and want more of them — this is for you.</p>
+    <div class="niches">
+      <span class="niche-tag">🌿 Lawn Care</span>
+      <span class="niche-tag">🏊 Pool Service</span>
+      <span class="niche-tag">❄️ HVAC</span>
+      <span class="niche-tag">🌳 Landscaping</span>
+      <span class="niche-tag">🧹 House Cleaning</span>
+      <span class="niche-tag">🐛 Pest Control</span>
+      <span class="niche-tag">🔧 Plumbing</span>
+      <span class="niche-tag">⚡ Electrical</span>
+      <span class="niche-tag">🪟 Pressure Washing</span>
+      <span class="niche-tag">🏠 Handyman</span>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section" id="contact">
+  <h2>Ready to see it work?<br><em>Takes 15 minutes.</em></h2>
+  <p>Free call, no hard sell. If it doesn't make sense for your business, we'll tell you straight.</p>
+  <div class="contact-options">
+    <a href="tel:+17578675309" class="contact-chip primary">📞 Call or Text Brandon</a>
+    <a href="mailto:petersonbrandon55@gmail.com" class="contact-chip">✉️ petersonbrandon55@gmail.com</a>
+  </div>
+  <p class="cta-note">Based in Hampton Roads, VA · Response within 24 hours</p>
+</section>
+
+<footer>
+  <div class="footer-logo">Peterson <span>Automations</span></div>
+  <p>Hampton Roads, VA · Local service business automation · © 2026</p>
+</footer>
+
+</body>
+</html>
